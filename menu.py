@@ -5,6 +5,7 @@ import numpy as np
 
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 from PIL import Image, ImageTk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -29,18 +30,46 @@ def funkcja():
     l2 = a1 * c1 + a0 * c2
     l1 = a1 * c0 + a0 * c1
     l0 = a0 * c0
-    licznik = [l3, l2, l1, l0]
+
+    licznik_oryginalny = [l3, l2, l1, l0]
+    licznik = list(licznik_oryginalny) # Kopia do modyfikacji
+
 
     d4 = b2 * d2
     d3 = b2 * d1 + b1 * d2 + a1 * c2
     d2 = b2 * d0 + b1 * d1 + b0 * d2 + a1 * c1 + a0 * c2
     d1 = b1 * d0 + b0 * d1 + a1 * c0 + a0 * c1
     d0 = b0 * d0 + a0 * c0
-    mianownik = [d4, d3, d2, d1, d0]
+    mianownik_oryginalny = [d4, d3, d2, d1, d0]
+    mianownik = list(mianownik_oryginalny) # Kopia do modyfikacji
+
+
+    rzad = 4
+
+
+
+    if abs(mianownik[0]) < 1e-8:
+        messagebox.showinfo("Informacja", "Wykryto układ 3 rzędu.")
+        #licznik = licznik[1:]
+        mianownik = mianownik[1:]
+        rzad = 3
+        if abs(mianownik[0]) < 1e-8:
+            messagebox.showinfo("Informacja", "Wykryto układ 2 rzędu.")
+            #licznik = licznik[1:]
+            mianownik = mianownik[1:]
+            rzad = 2
+            if abs(mianownik[0]) < 1e-8:
+                messagebox.showinfo("Informacja", "Wykryto układ 1 rzędu.")
+                #licznik = licznik[1:]
+                mianownik = mianownik[1:]
+                rzad = 1
+                if abs(mianownik[0]) < 1e-8:
+                    messagebox.showerror("Błąd", "Mianownik jest zerowy. Nie można wyznaczyć odpowiedzi.")
+                    return
 
     zakres = float(entryzakres0.get()), float(entryzakres1.get())
 
-    y,u,t = wyznacz_odpowiedz(licznik,mianownik,float(entryczastrwania.get()),float(entryczasprobki.get()),pobudzenie.get(),float(entryczestotliwosc.get()),zakres)
+    y,u,t = wyznacz_odpowiedz(licznik,mianownik,rzad,float(entryczastrwania.get()),float(entryczasprobki.get()),pobudzenie.get(),float(entryczestotliwosc.get()),zakres)
 
     fig = Figure(figsize=(6, 4), dpi=100)
     ax = fig.add_subplot(111)
@@ -48,7 +77,7 @@ def funkcja():
     ax.plot(t, y, label='Odpowiedź y(t)')
     ax.set_xlabel('Czas [s]')
     ax.set_ylabel('Wyjście')
-    ax.set_title('Odpowiedź układu – metoda Eulera')
+    ax.set_title(f'Odpowiedź układu {rzad} rzędu – metoda Eulera')
     ax.grid()
     ax.legend()
     canvas_matplotlib = FigureCanvasTkAgg(fig, master=root)
@@ -78,6 +107,8 @@ canvas.pack()
 
 #Wybor ksztaltu pobudzenia
 pobudzenie = IntVar()
+#Domyślnie zaznaczony Sinus
+pobudzenie.set(1) # 1 dla Sinusa
 
 rb1 = Radiobutton(root, text="Sinus", variable=pobudzenie, value=1)
 rb2 = Radiobutton(root, text="Trojkat", variable=pobudzenie, value=2)
@@ -157,17 +188,42 @@ canvas.create_window(500,465, window=entryczasprobki)
 
 #entry - default values
 
-entryzakres0.insert(0, "0")
-entryzakres1.insert(0, "0")
+# Ustawienie domyślnych wartości
 
-entryczestotliwosc.insert(0,"1")
-entryczasprobki.insert(0,"0.01")
-entryczastrwania.insert(0,"10")
+# Transmitancja obiektu: 1/(s^2 + s +1 )
+entrya1.insert(0, "0")
+entrya0.insert(0, "1")
+
+entryb2.insert(0, "1")
+entryb1.insert(0, "1")
+entryb0.insert(0, "1")
+
+# Transmitancja sterownika: (s+2)/(s^2 + 2s + 2)
+entryc2.insert(0, "0")
+entryc1.insert(0, "1")
+entryc0.insert(0, "2")
+
+entryd2.insert(0, "1")
+entryd1.insert(0, "2")
+entryd0.insert(0, "2")
+
+# Czas pobudzenia: [0 , 10] s
+entryzakres0.insert(0, "0")
+entryzakres1.insert(0, "10")
+
+# Częstotliwość: 0.5 Hz
+entryczestotliwosc.insert(0, "0.5")
+
+# Czas trwania symulacji: 10 s
+entryczastrwania.insert(0, "10")
+
+# Długość jednej próbki: 0.01 s
+entryczasprobki.insert(0, "0.01")
 
 
 # tlo - uklad
 
-img = Image.open("uklad.png")
+img = Image.open("C:/Users/szyme/Desktop/sem4/MMMy projekt/uklad.png")
 img = img.resize((777, 246))
 photo = ImageTk.PhotoImage(img)
 canvas.create_image(400,200,anchor = "center", image=photo)

@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import signal
 
-def wyznacz_odpowiedz(num,den,czas_trwania_symulacji,czas_trwania_probki,pobudzenie,czestotliwosc,zakres):
+def wyznacz_odpowiedz(num, den, rzad, czas_trwania_symulacji, czas_trwania_probki, pobudzenie, czestotliwosc, zakres):
 
     # w tym miejscu mamy gotowy licznik i mianownik naszej finalnej transmitancji dla ktorej musimy eulerem obliczyc odpowiedz
 
@@ -41,13 +41,35 @@ def wyznacz_odpowiedz(num,den,czas_trwania_symulacji,czas_trwania_probki,pobudze
 
 
 
-    for k in range(4, N):
-        d4y[k] = (1 / den[0]) * (
-            num[0]*d3u[k] + num[1]*d2u[k] + num[2]*du[k] + num[3]*u[k] - den[1]*d3y[k-1] - den[2]*d2y[k-1] - den[3]*dy[k-1] - den[4]*y[k-1]
-        )
-        d3y[k] = d3y[k-1] + Ts * d4y[k]
-        d2y[k] = d2y[k-1] + Ts * d3y[k]
-        dy[k] = dy[k-1] + Ts * d2y[k]
-        y[k] = y[k-1] + Ts * dy[k]
+    if rzad == 4:
+        for k in range(4, N):
+            d4y[k] = (1 / den[0]) * (
+                num[0] * d3u[k] + num[1] * d2u[k] + num[2] * du[k] + num[3] * u[k] - den[1] * d3y[k - 1] - den[2] * d2y[k - 1] - den[3] * dy[k - 1] - den[4] * y[k - 1]
+            )
+            d3y[k] = d3y[k - 1] + Ts * d4y[k]
+            d2y[k] = d2y[k - 1] + Ts * d3y[k]
+            dy[k] = dy[k - 1] + Ts * d2y[k]
+            y[k] = y[k - 1] + Ts * dy[k]
+    elif rzad == 3:
+        for k in range(3, N):
+            d3y[k] = (1 / den[0]) * (
+                num[0] * d3u[k] + num[1] * d2u[k] + num[2] * du[k] + num[3] * u[k] - den[1] * d2y[k - 1] - den[2] * dy[k - 1] - den[3] * y[k - 1]
+            )
+            d2y[k] = d2y[k - 1] + Ts * d3y[k]
+            dy[k] = dy[k - 1] + Ts * d2y[k]
+            y[k] = y[k - 1] + Ts * dy[k]
+    elif rzad == 2:
+        for k in range(2, N):
+            d2y[k] = (1 / den[0]) * (
+                num[0] * d3u[k] + num[1] * d2u[k] + num[2] * du[k] + num[3] * u[k] - den[1] * dy[k - 1] - den[2] * y[k - 1]
+            )
+            dy[k] = dy[k - 1] + Ts * d2y[k]
+            y[k] = y[k - 1] + Ts * dy[k]
+    elif rzad == 1:
+        for k in range(1, N):
+            dy[k] = (1 / den[0]) * (
+                num[0] * d3u[k] + num[1] * d2u[k] + num[2] * du[k] + num[3] * u[k] - den[1] * y[k - 1]
+            )
+            y[k] = y[k - 1] + Ts * dy[k]
 
     return y,u,t
